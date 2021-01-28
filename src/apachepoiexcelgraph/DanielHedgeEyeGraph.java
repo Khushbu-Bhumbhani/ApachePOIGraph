@@ -5,6 +5,7 @@
  */
 package apachepoiexcelgraph;
 
+import static apachepoiexcelgraph.DanielHedgeEye.dirPath;
 import connectionManager.MyConnection;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -42,7 +43,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  */
 public class DanielHedgeEyeGraph {
 
-    public static void main(String[] args) {
+    //  public static void main(String[] args) {
+    public static void GenerateGraph(String dirPath) {
         try {
             XSSFWorkbook wb = new XSSFWorkbook();
             String sheetName = "Sheet1";
@@ -56,7 +58,7 @@ public class DanielHedgeEyeGraph {
             int colCount = 0;
             while (rsIndex.next()) {
                 String indexName = rsIndex.getString("index_name");
-                System.out.println("Index:->" + indexName);
+            //    System.out.println("Index:->" + indexName);
                 XSSFSheet sheet = wb.createSheet(indexName.replace("/", "_"));
                 String selectQ = "SELECT * FROM hedgeeye_tool.data_master d, index_master i where d.index_id=i.index_id and index_name='" + indexName + "';";
                 Double buyData[] = new Double[31];
@@ -135,7 +137,7 @@ public class DanielHedgeEyeGraph {
                 YearMonth yearMonthObject = YearMonth.of(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1);
                 int daysInMonth = yearMonthObject.lengthOfMonth(); //28
 
-                System.out.println("Days in moth:" + daysInMonth);
+               // System.out.println("Days in moth:" + daysInMonth);
                 for (int i = 1, j = 0; i <= daysInMonth; i++, j++) {
                     if (calendar.get(Calendar.DAY_OF_WEEK) != 7 && calendar.get(Calendar.DAY_OF_WEEK) != 0) {
                         dates[j] = i + "/" + (calendar.get(Calendar.MONTH) + 1);
@@ -196,10 +198,10 @@ public class DanielHedgeEyeGraph {
                 rowCout = rowCout + 30;
             }
             // Write output to excel file
-            String filename = "E:\\DanielGraphTest.xlsx";
+            String filename = dirPath + "\\output\\HedgeEyeGraph.xlsx";
             fileOut = new FileOutputStream(filename);
             wb.write(fileOut);
-            System.out.println("->" + filename);
+            System.out.println("Graph file->" + filename);
         } catch (FileNotFoundException ex) {
             Logger.getLogger(DanielHedgeEyeGraph.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
