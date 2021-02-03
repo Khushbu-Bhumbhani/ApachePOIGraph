@@ -39,6 +39,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 /**
@@ -81,7 +82,7 @@ public class DanielHedgeEye {
         // String url="https://app.hedgeye.com/feed_items/84347-may-12-2020?with_category=33-risk-ranges";
         System.setProperty("webdriver.chrome.driver", chromePath);
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless");
+        // options.addArguments("--headless");
         ChromeDriver driver = new ChromeDriver(options);
         boolean hasNextPage = false;
 
@@ -93,7 +94,7 @@ public class DanielHedgeEye {
         form.findElement(By.id("user_password")).sendKeys("3qsd6gTQtXqw2&8EH#G4pv9x%H%@iDsyK1E$03ibpNmV^dwhkyAjvbJ072Ktgd$$gWmtE7#Y0QwYWNT");*/
         form.findElement(By.id("user_email")).sendKeys("dcooper@paradigmpmo.com");
         form.findElement(By.id("user_password")).sendKeys("H4mzapassword");
-        form.findElement(By.id("se-be-login-submit")).click();
+        //   form.findElement(By.id("se-be-login-submit")).click();
 
         waitForJSandJQueryToLoad(driver);
 
@@ -122,32 +123,37 @@ public class DanielHedgeEye {
 
     private static void getTodaysData(ChromeDriver driver) {
         try {
+            WebDriverWait wait = new WebDriverWait(driver, 300);
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("se-top-nav-logout")));
+
             //System.out.println(""+driver.getPageSource());
             driver.get("https://app.hedgeye.com/feed_items/all?page=1&amp;with_category=33-risk-ranges");
             //   driver.get("https://app.hedgeye.com/feed_items/92222-november-27-2020?with_category=33-risk-ranges");
             waitForJSandJQueryToLoad(driver);
+            Thread.sleep(5000);
             Document doc = Jsoup.parse(driver.getPageSource());
             Element table = doc.getElementsByClass("dtr-table").first();
-
+            boolean isFirstRow = true;
             //get all index from database - check with today's index and add if any new index found
-            MyConnection.getConnection("hedgeeye_tool");
-            String selectQ = "SELECT index_id,index_name FROM hedgeeye_tool.index_master;";
-            ResultSet rs = MyConnection.getResultSet(selectQ);
-            while (rs.next()) {
+            for (Element tr : table.getElementsByTag("tr")) {
+                if (isFirstRow) {
+                    isFirstRow = false;
+                    continue;
+                }
                 boolean matchFound = false;
-                boolean isFirstRow = true;
 
                 String value = "";
-                for (Element tr : table.getElementsByTag("tr")) {
-                    if (isFirstRow) {
-                        isFirstRow = false;
-                        continue;
-                    }
-                    String index = tr.getElementsByTag("td").get(0).getElementsByTag("strong").text();
-                    if (index.contains("(")) {
-                        index = StringUtils.substringBefore(index, "(").trim();
-                    }
-                    value = index;
+                MyConnection.getConnection("hedgeeye_tool");
+                String selectQ = "SELECT index_id,index_name FROM hedgeeye_tool.index_master;";
+                ResultSet rs = MyConnection.getResultSet(selectQ);
+                String index = tr.getElementsByTag("td").get(0).getElementsByTag("strong").text();
+                if (index.contains("(")) {
+                    index = StringUtils.substringBefore(index, "(").trim();
+                }
+                value = index;
+                System.out.println("tr index->" + value);
+                while (rs.next()) {
+
                     String dbIndex = rs.getString("index_name");
                     if (dbIndex.equalsIgnoreCase(index)) {
                         matchFound = true;
@@ -169,9 +175,10 @@ public class DanielHedgeEye {
             Date parse = smt.parse(date);
             smt = new SimpleDateFormat("yyyy-MM-dd");
             String feed_date = smt.format(parse);
-            rs = MyConnection.getResultSet(selectQ);
+            String selectQ = "SELECT index_id,index_name FROM hedgeeye_tool.index_master;";
+            ResultSet rs = MyConnection.getResultSet(selectQ);
             while (rs.next()) {
-                boolean isFirstRow = true;
+                isFirstRow = true;
                 for (Element tr : table.getElementsByTag("tr")) {
                     if (isFirstRow) {
                         isFirstRow = false;
@@ -217,6 +224,8 @@ public class DanielHedgeEye {
         } catch (SQLException ex) {
             Logger.getLogger(DanielHedgeEye.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ParseException ex) {
+            Logger.getLogger(DanielHedgeEye.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InterruptedException ex) {
             Logger.getLogger(DanielHedgeEye.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -395,7 +404,7 @@ public class DanielHedgeEye {
                                         cell.setCellValue("DOWN");
                                         cell.setCellStyle(redStyle);
                                     } else {
-                                        Cell cell = rw.getCell(BUY_COL);
+                                        Cell cell = rw.createCell(M1_COL);
                                         cell.setCellValue("NA");
                                         cell.setCellStyle(whiteStyle);
                                     }
@@ -408,7 +417,7 @@ public class DanielHedgeEye {
                                         cell.setCellValue("DOWN");
                                         cell.setCellStyle(redStyle);
                                     } else {
-                                        Cell cell = rw.getCell(SELL_COL);
+                                        Cell cell = rw.createCell(M2_COL);
                                         cell.setCellValue("NA");
                                         cell.setCellStyle(whiteStyle);
                                     }
